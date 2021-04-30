@@ -69,6 +69,7 @@ class NoteFolder:
         self.notes = [
             Note.load(os.path.join(self.path, fn), self.note_type)
             for fn in os.listdir(self.path)
+            if fn.endswith(".md")
         ]
 
     def push(self):
