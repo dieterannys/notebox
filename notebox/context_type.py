@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict
 
 from notebox.config import ContextTypeConfig
 from notebox.context_provider.base import ContextProvider, ContextProviderItem
 from notebox.note_folder import NoteFolder
-from notebox.note import Note
 
 
 class ContextType(NoteFolder):

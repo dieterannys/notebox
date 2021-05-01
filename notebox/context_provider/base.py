@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from datetime import date
 from dataclasses import dataclass
 from typing import Dict, Any
 from enum import Enum

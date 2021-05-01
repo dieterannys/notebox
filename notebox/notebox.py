@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import logging
 import subprocess
-from datetime import datetime
 
 from notebox.config import Config
 from notebox.note_folder import NoteFolder

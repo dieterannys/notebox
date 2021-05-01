@@ -6,15 +6,13 @@ import subprocess
 from dataclasses import dataclass
 from typing import List, Any, Callable
 
-from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.completion import Completer, Completion, WordCompleter, FuzzyWordCompleter, FuzzyCompleter
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completer, Completion 
 
 from notebox.notebox import Notebox
 from notebox.note_folder import NoteFolder
 from notebox.config import Config
 from notebox.context_provider.base import ContextProviderItemType
-from notebox.note import Note
-from notebox.context_type import ContextType
 
 
 @dataclass
@@ -26,7 +24,7 @@ class Command:
 
 class NoteCompleter(Completer):
 
-    DEFAULT_STYLE = "bg:#CCCCCC fg:ansiblack"
+    DEFAULT_STYLE = "bg:#BBBBBB fg:ansiblack"
     FLAGGED_STYLE = "bg:ansiwhite fg:ansiblack"
 
     def __init__(self, commands: List[Command]):

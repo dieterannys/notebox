@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-import logging
 from datetime import datetime
-from typing import Dict
 
-from notebox.note import Note, NoteBody, Link, NoteType
+from notebox.note import Note, NoteBody, NoteType
 
 
 class MalformedNoteException(Exception):

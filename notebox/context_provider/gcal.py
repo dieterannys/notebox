@@ -2,7 +2,7 @@
 
 import os
 import pickle
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow

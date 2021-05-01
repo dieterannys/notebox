@@ -4,7 +4,7 @@ import os
 import re
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List
 
 import yaml
 
