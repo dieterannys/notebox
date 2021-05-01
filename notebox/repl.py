@@ -113,6 +113,7 @@ class ApplicationREPL:
             Command("edit", self.edit_selected_zettel_command),
             Command("start", self.start_command),
             Command("stop", self.stop_command),
+            Command("clean", self.clean_command),
             Command("quit", self.quit_command)
         ]
 
@@ -194,7 +195,12 @@ class ApplicationREPL:
         self.notebox.edit_note(self.selected_zettel)
 
     @no_args
+    def clean_command(self):
+        self.notebox.clean()
+
+    @no_args
     def quit_command(self):
+        self.notebox.clean()
         exit()
 
 

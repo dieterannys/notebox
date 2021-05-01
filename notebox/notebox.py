@@ -62,6 +62,15 @@ class Notebox:
         note1.push()
         note2.push()
 
+    def clean(self):
+        for folder in [self.zettels, *self.context_types.values()]:
+            folder.pull()
+            for note in folder.notes:
+                if note.is_empty:
+                    print(f"removing empty note {note.body.title}")
+                    note.delete()
+            folder.pull()
+
     def get_or_create_zettel_by_title(self, title: str):
         try:
             return self.zettels.notes_by_title[title]

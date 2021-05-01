@@ -119,6 +119,10 @@ class Note:
     def filepath(self):
         return os.path.join(self.folder_path, self.uid + ".md")
 
+    @property
+    def is_empty(self):
+        return len(self.body.content) == 0 and len(self.body.links) == 0 and len(self.body.references) == 0
+
     @classmethod
     def load(cls, filepath, note_type):
         with open(filepath) as f:
@@ -138,4 +142,7 @@ class Note:
     def push(self):
         with open(self.filepath, 'w') as f:
             f.write(self.body.to_string())
+
+    def delete(self):
+        os.remove(self.filepath)
 
