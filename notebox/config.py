@@ -30,7 +30,7 @@ class ContextTypeProviderConfig:
     def from_dict(cls, d: Dict):
         return cls(
             name=d['name'],
-            collection=d['collection']
+            collection=d['collection'],
         )
 
 
@@ -38,12 +38,14 @@ class ContextTypeProviderConfig:
 class ContextTypeConfig:
     name: str
     context_provider: ContextTypeProviderConfig
+    title_format: str
 
     @classmethod
     def from_dict(cls, d: Dict):
         return cls(
             name=d['name'],
             context_provider=ContextTypeProviderConfig.from_dict(d['context_provider']),
+            title_format=d['title_format']
         )
 
 

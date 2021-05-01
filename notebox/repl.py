@@ -23,21 +23,27 @@ class Command:
     func: Callable
     argopts: Any = None
 
+
 class NoteCompleter(Completer):
+
+    DEFAULT_STYLE = "bg:#CCCCCC fg:ansiblack"
+    FLAGGED_STYLE = "bg:ansiwhite fg:ansiblack"
 
     def __init__(self, commands: List[Command]):
         self.opt_tree = {c.name: c.argopts for c in commands}
         super().__init__()
 
-    def fuzzy_match(self, substring, options, position, title_func, uid_func = None):
+    def fuzzy_match(self, substring, options, position, title_func, uid_func = None, flag_func = lambda n: False):
         words = [w.lower() for w in substring.split(' ')]
         uid_func = title_func if uid_func is None else uid_func
-        for option in options:
+        for option in sorted(options, key=lambda o: not flag_func(o)):
             display_title = title_func(option)
             match_title = display_title.lower()
             uid = uid_func(option)
             if all([w in match_title for w in words]):
-                yield Completion(uid, -position, display_title)
+                style = self.FLAGGED_STYLE if flag_func(option) else self.DEFAULT_STYLE
+                selected_style = style + " bold"
+                yield Completion(uid, -position, display_title, style=style, selected_style=selected_style)
 
     def get_subcompletions(self, subcmd, subopt, position):
         if subopt is None:
@@ -50,19 +56,12 @@ class NoteCompleter(Completer):
             else:
                 for k in subopt.keys():
                     if k.startswith(subcmd):
-                        yield Completion(k, -position)
+                        yield Completion(k, -position, style=self.DEFAULT_STYLE, selected_style=self.DEFAULT_STYLE + " bold")
         elif isinstance(subopt, NoteFolder):
             if position == 0:
                 subopt.pull()
-            for completion in self.fuzzy_match(subcmd, [n for n in subopt.notes], position, lambda n: n.body.title, lambda n: n.uid):
+            for completion in self.fuzzy_match(subcmd, [n for n in subopt.notes], position, lambda n: n.body.title, lambda n: n.uid, lambda n: n.flagged):
                 yield completion
-        elif isinstance(subopt, ContextType):
-            if position == 0:
-                subopt.pull()
-            for completion in self.fuzzy_match(subcmd, [c for c in subopt.contexts], position, lambda c: c.context_provider_item.title, lambda c: c.note.uid):
-                yield completion
-        else:
-            yield Completion(str(type(subopt)), -position)
 
     def get_completions(self, document, complete_event):
         return self.get_subcompletions(document.text, self.opt_tree, document.cursor_position)
@@ -139,7 +138,7 @@ class ApplicationREPL:
     def toolbar(self):
         return (
             f"(Z) {self.selected_zettel.body.title if self.selected_zettel is not None else '-'}\n"
-            f"(C) {self.selected_context.context_provider_item.title if self.selected_context is not None else '-'}\n"
+            f"(C) {self.selected_context.body.title if self.selected_context is not None else '-'}\n"
             f"(D) {self.notebox.name.upper()}"
         )
 
@@ -157,15 +156,15 @@ class ApplicationREPL:
 
     @with_args("context_type_name", "note_uid")
     def select_context_command(self, context_type_name, note_uid):
-        self.selected_context = self.notebox.context_types[context_type_name].contexts_by_note_id[note_uid]
-        print(f"selected context: {self.selected_context.note.body.title}")
+        self.selected_context = self.notebox.context_types[context_type_name].notes_by_id[note_uid]
+        print(f"selected context: {self.selected_context.body.title}")
 
     @no_args
     def start_command(self):
         if self.selected_context is None:
             print('please select a context first')
             return
-        self.notebox.edit_note(self.selected_context.note)
+        self.notebox.edit_note(self.selected_context)
         cmd = ["timew", "start", self.notebox.name]
         if self.selected_context.context_provider_item.item_type == ContextProviderItemType.EVENT:
             cmd.append("meeting")

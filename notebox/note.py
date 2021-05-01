@@ -8,6 +8,8 @@ from typing import List, Dict
 
 import yaml
 
+from notebox.context_provider.base import ContextProviderItem
+
 
 LINKS_HEADER = "**Links**"
 REFERENCES_HEADER = "**References**"
@@ -110,6 +112,8 @@ class Note:
     folder_path: str
     note_type: NoteType
     body: NoteBody
+    provider_item: ContextProviderItem = None
+    flagged: bool = False
 
     @property
     def filepath(self):

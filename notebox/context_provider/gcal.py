@@ -45,7 +45,6 @@ class ContextProviderGcal(ContextProvider):
         end_time = datetime.fromisoformat(raw['end']['dateTime'])
         return ContextProviderItem(
             title=title,
-            refnote_title=f"{start_time.strftime('%Y-%m-%d %H:%M')}-{end_time.strftime('%H:%M')} - {title}",
             uid=raw["id"],
             collection=collection,
             account=self.username,

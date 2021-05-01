@@ -31,7 +31,6 @@ class ContextProviderTodoist(ContextProvider):
         created_time = datetime.fromisoformat(raw["date_added"][:-1])
         return ContextProviderItem(
             title=title,
-            refnote_title=f"{created_time.strftime('%Y-%m-%d')} - {title}",
             uid=raw["id"],
             collection=self._project_name_by_id[raw["project_id"]],
             account=self.client.state["user"]["email"],

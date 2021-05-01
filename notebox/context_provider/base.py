@@ -14,7 +14,6 @@ class ContextProviderItemType(Enum):
 @dataclass
 class ContextProviderItem:
     title: str
-    refnote_title: str
     uid: str
     collection: str
     account: str
