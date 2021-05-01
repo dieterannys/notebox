@@ -29,7 +29,7 @@ class ContextType(NoteFolder):
             try:
                 note = self.notes_by_id[uid]
             except KeyError:
-                note = self.notes.create(note_title, uid)
+                note = self.create(note_title, uid)
             note.provider_item = provider_item
             note.flagged = True
 

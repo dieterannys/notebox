@@ -45,7 +45,7 @@ class ContextTypeConfig:
         return cls(
             name=d['name'],
             context_provider=ContextTypeProviderConfig.from_dict(d['context_provider']),
-            title_format=d['title_format']
+            title_format=d.get('title_format', "{title}")
         )
 
 

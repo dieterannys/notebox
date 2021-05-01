@@ -13,6 +13,7 @@ from notebox.notebox import Notebox
 from notebox.note_folder import NoteFolder
 from notebox.config import Config
 from notebox.context_provider.base import ContextProviderItemType
+from notebox.note import NoteType
 
 
 @dataclass
@@ -96,8 +97,7 @@ class ApplicationREPL:
 
     def __init__(self, domain_name: str):
         self.notebox = Notebox(Config.from_yaml_file(os.path.join(os.getenv('HOME'), ".notebox", domain_name + ".yaml")))
-        self.selected_zettel = None
-        self.selected_context = None
+        self.selected_note = None
 
         self.commands = [
             Command("zettel", self.select_zettel_command, self.notebox.zettels),
@@ -110,7 +110,7 @@ class ApplicationREPL:
             ),
             Command("deselect", self.deselect_command),
             Command("link", self.link_zettel_command, self.notebox.zettels),
-            Command("edit", self.edit_selected_zettel_command),
+            Command("edit", self.edit_note_command),
             Command("start", self.start_command),
             Command("stop", self.stop_command),
             Command("clean", self.clean_command),
@@ -144,42 +144,50 @@ class ApplicationREPL:
             print(f"Unknown command {command}")
 
     def toolbar(self):
+        if self.selected_note is None:
+            note_type_indicator = ' '
+        elif self.selected_note.note_type == NoteType.ZETTEL:
+            note_type_indicator = 'Z'
+        elif self.selected_note.note_type == NoteType.CONTEXT:
+            note_type_indicator = 'C'
+        else:
+            note_type_indicator = ' '
+
         return (
-            f"(Z) {self.selected_zettel.body.title if self.selected_zettel is not None else '-'}\n"
-            f"(C) {self.selected_context.body.title if self.selected_context is not None else '-'}\n"
+            f"({note_type_indicator}) {self.selected_note.body.title if self.selected_note is not None else '-'}\n"
             f"(D) {self.notebox.name.upper()}"
         )
 
     @with_args("uid")
     def link_zettel_command(self, uid):
-        self.notebox.link(self.selected_zettel, self.notebox.zettels.notes_by_id[uid])
+        self.notebox.link(self.selected_note, self.notebox.zettels.notes_by_id[uid])
 
     @with_args("uid_or_title")
     def select_zettel_command(self, uid_or_title):
         try:
-            self.selected_zettel = self.notebox.zettels.notes_by_id[uid_or_title]
+            self.selected_note = self.notebox.zettels.notes_by_id[uid_or_title]
         except KeyError:
-            self.selected_zettel = self.notebox.zettels.create(uid_or_title)
-        print(f"selected zettel: {self.selected_zettel.body.title}")
+            self.selected_note = self.notebox.zettels.create(uid_or_title)
+        print(f"selected zettel: {self.selected_note.body.title}")
 
     @with_args("context_type_name", "note_uid")
     def select_context_command(self, context_type_name, note_uid):
-        self.selected_context = self.notebox.context_types[context_type_name].notes_by_id[note_uid]
-        print(f"selected context: {self.selected_context.body.title}")
+        self.selected_note = self.notebox.context_types[context_type_name].notes_by_id[note_uid]
+        print(f"selected context: {self.selected_note.body.title}")
 
     @no_args
     def start_command(self):
-        if self.selected_context is None:
+        if self.selected_note is None or self.selected_note.note_type != NoteType.CONTEXT:
             print('please select a context first')
             return
-        self.notebox.edit_note(self.selected_context)
+        self.notebox.edit_note(self.selected_note)
         cmd = ["timew", "start", self.notebox.name]
-        if self.selected_context.context_provider_item.item_type == ContextProviderItemType.EVENT:
+        if self.selected_note.context_provider_item.item_type == ContextProviderItemType.EVENT:
             cmd.append("meeting")
         else: 
-            cmd.extend(self.selected_context.context_provider_item.attributes.get('tags', []))
+            cmd.extend(self.selected_note.context_provider_item.attributes.get('tags', []))
         subprocess.Popen(cmd)
-        subprocess.Popen(["timew", "annotate", self.selected_context.context_provider_item.title])
+        subprocess.Popen(["timew", "annotate", self.selected_note.context_provider_item.title])
 
     @no_args
     def stop_command(self):
@@ -187,12 +195,11 @@ class ApplicationREPL:
 
     @no_args
     def deselect_command(self):
-        self.selected_zettel = None
-        self.selected_context = None
+        self.selected_note = None
 
     @no_args
-    def edit_selected_zettel_command(self):
-        self.notebox.edit_note(self.selected_zettel)
+    def edit_note_command(self):
+        self.notebox.edit_note(self.selected_note)
 
     @no_args
     def clean_command(self):
