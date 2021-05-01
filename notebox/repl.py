@@ -24,12 +24,20 @@ class Command:
 
 class NoteCompleter(Completer):
 
-    DEFAULT_STYLE = "bg:#BBBBBB fg:ansiblack"
-    FLAGGED_STYLE = "bg:ansiwhite fg:ansiblack"
+    STYLE_BG_DEFAULT = "bg:#BBBBBB"
+    STYLE_BG_FLAGGED = "bg:ansiwhite"
+
+    STYLE_FG = "fg:#333333"
+    STYLE_FG_SELECTED = "fg:ansiblack bold"
 
     def __init__(self, commands: List[Command]):
         self.opt_tree = {c.name: c.argopts for c in commands}
         super().__init__()
+
+    def get_style(self, selected: bool, flagged: bool = False):
+        bg = self.STYLE_BG_FLAGGED if flagged else self.STYLE_BG_DEFAULT
+        fg = self.STYLE_FG_SELECTED if selected else self.STYLE_FG
+        return f"{bg} {fg}"
 
     def fuzzy_match(self, substring, options, position, title_func, uid_func = None, flag_func = lambda n: False):
         words = [w.lower() for w in substring.split(' ')]
@@ -37,10 +45,11 @@ class NoteCompleter(Completer):
         for option in sorted(options, key=lambda o: not flag_func(o)):
             display_title = title_func(option)
             match_title = display_title.lower()
-            uid = uid_func(option)
             if all([w in match_title for w in words]):
-                style = self.FLAGGED_STYLE if flag_func(option) else self.DEFAULT_STYLE
-                selected_style = style + " bold"
+                uid = uid_func(option)
+                flagged = flag_func(option)
+                style = self.get_style(False, flagged)
+                selected_style = self.get_style(True, flagged)
                 yield Completion(uid, -position, display_title, style=style, selected_style=selected_style)
 
     def get_subcompletions(self, subcmd, subopt, position):
@@ -54,7 +63,7 @@ class NoteCompleter(Completer):
             else:
                 for k in subopt.keys():
                     if k.startswith(subcmd):
-                        yield Completion(k, -position, style=self.DEFAULT_STYLE, selected_style=self.DEFAULT_STYLE + " bold")
+                        yield Completion(k, -position, style=self.get_style(False), selected_style=self.get_style(True))
         elif isinstance(subopt, NoteFolder):
             if position == 0:
                 subopt.pull()
