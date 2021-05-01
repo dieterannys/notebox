@@ -77,10 +77,12 @@ context_providers:
       credentials_json_path: "/home/user/credentials.json"
 context_types:
   - name: project
+    title_format: "{created_time:%Y-%m-%d} - {title}"
     context_provider: 
       name: mytodoist
       collection: projectlist
   - name: source
+    title_format: "{start_time:%Y-%m-%d %H:%M}-{end_time:%H:%M} - {title}"
     context_provider: 
       name: mytodoist
       collection: booklist
