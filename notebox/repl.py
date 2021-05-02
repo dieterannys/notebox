@@ -153,10 +153,7 @@ class ApplicationREPL:
         else:
             note_type_indicator = ' '
 
-        return (
-            f"({note_type_indicator}) {self.selected_note.body.title if self.selected_note is not None else '-'}\n"
-            f"(D) {self.notebox.name.upper()}"
-        )
+        return f"[{self.notebox.name.upper()}] [{note_type_indicator}] {self.selected_note.body.title if self.selected_note is not None else '-'}"
 
     @with_args("uid")
     def link_zettel_command(self, uid):
@@ -182,12 +179,12 @@ class ApplicationREPL:
             return
         self.notebox.edit_note(self.selected_note)
         cmd = ["timew", "start", self.notebox.name]
-        if self.selected_note.context_provider_item.item_type == ContextProviderItemType.EVENT:
+        if self.selected_note.provider_item.item_type == ContextProviderItemType.EVENT:
             cmd.append("meeting")
         else: 
-            cmd.extend(self.selected_note.context_provider_item.attributes.get('tags', []))
+            cmd.extend(self.selected_note.provider_item.attributes.get('tags', []))
         subprocess.Popen(cmd)
-        subprocess.Popen(["timew", "annotate", self.selected_note.context_provider_item.title])
+        subprocess.Popen(["timew", "annotate", self.selected_note.provider_item.title])
 
     @no_args
     def stop_command(self):
