@@ -48,7 +48,7 @@ class ContextProviderTodoist(ContextProvider):
         project_id = self._project_id_by_name[collection]
         return [self._convert_to_item(raw) for raw in self.client.state['items'] 
                 if raw['project_id'] == project_id
-                and raw['due'] is not None and datetime.now().strftime('%Y-%m-%d') in raw['due'].get('date')
+                and raw['due'] is not None and datetime.now().strftime('%Y-%m-%d') >= raw['due'].get('date')[:10]
                 and raw['checked'] == 0]
 
     def get_comments(self, task):
