@@ -7,6 +7,7 @@ from notebox.note import NoteBody, Link
 
 note = NoteBody(
     title="Note Title",
+    extra_attributes=dict(author="Some Guy"),
     content="Hello World!",
     links=[Link("Link 1", "./98765.md"), Link("Link 2", "./00000.md")],
     references=[Link("Reference 1", "../reference/type/ref1.md")]
@@ -14,6 +15,7 @@ note = NoteBody(
 
 markdown = """---
 title: Note Title
+author: Some Guy
 ---
 
 Hello World!

@@ -2,9 +2,10 @@
 
 import os
 import re
+import io
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict, Any
 
 import yaml
 
@@ -31,8 +32,11 @@ class NoteBody:
 
     # Front matter
     title: str
+    extra_attributes: Dict[str, Any] = field(default_factory=dict)
+    
     # Content
     content: str = ""
+
     #  Footer
     links: List[Link] = field(default_factory=list)
     references: List[Link] = field(default_factory=list)
@@ -46,6 +50,7 @@ class NoteBody:
             raise MalformedNoteException(filepath)
         front_matter_raw = yaml.load(blocks[1], Loader=yaml.FullLoader)
         title = front_matter_raw['title']
+        extra_attributes = {k: v for k, v in front_matter_raw.items() if k != 'title'}
 
         # Footer
         link_pattern = re.compile(r"\[(.+)\]\((.+)\)")
@@ -80,19 +85,26 @@ class NoteBody:
 
         return cls(
             title=title,
+            extra_attributes=extra_attributes,
             content=content,
             links=links,
             references=references
         )
 
     def to_string(self):
+        stream = io.StringIO()
+        yaml.dump(dict(title=self.title), stream, allow_unicode=True)
+        if self.extra_attributes != dict():
+            yaml.dump(self.extra_attributes, stream, allow_unicode=True)
+        stream.seek(0)
         lines = [
             f"---",
-            f"title: \"{self.title}\"",
+            stream.read().strip(),
             f"---",
             f"",
             self.content,
         ]
+        stream.close()
         if len(self.links) > 0 or len(self.references) > 0:
             lines.append(f"\n---")
         if len(self.links) > 0:
