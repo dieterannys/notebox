@@ -159,18 +159,19 @@ class ApplicationREPL:
     def link_zettel_command(self, uid):
         self.notebox.link(self.selected_note, self.notebox.zettels.notes_by_id[uid])
 
+    def select_note(self, note_folder, uid_or_title):
+        try:
+            self.selected_note = note_folder.notes_by_id[uid_or_title]
+        except KeyError:
+            self.selected_note = note_folder.create(uid_or_title)
+
     @with_args("uid_or_title")
     def select_zettel_command(self, uid_or_title):
-        try:
-            self.selected_note = self.notebox.zettels.notes_by_id[uid_or_title]
-        except KeyError:
-            self.selected_note = self.notebox.zettels.create(uid_or_title)
-        print(f"selected zettel: {self.selected_note.body.title}")
+        self.select_note(self.zettels, uid_or_title)
 
-    @with_args("context_type_name", "note_uid")
-    def select_context_command(self, context_type_name, note_uid):
-        self.selected_note = self.notebox.context_types[context_type_name].notes_by_id[note_uid]
-        print(f"selected context: {self.selected_note.body.title}")
+    @with_args("context_type_name", "uid_or_title")
+    def select_context_command(self, context_type_name, uid_or_title):
+        self.select_note(self.notebox.context_types[context_type_name], uid_or_title)
 
     @no_args
     def start_command(self):
