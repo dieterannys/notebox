@@ -28,6 +28,8 @@ class ContextType(NoteFolder):
             uid = self.get_uid_from_attributes(provider_item)
             try:
                 note = self.notes_by_id[uid]
+                note.body.title = note_title
+                note.push()
             except KeyError:
                 note = self.create(note_title, uid)
             note.provider_item = provider_item
