@@ -167,7 +167,7 @@ class ApplicationREPL:
 
     @with_args("uid_or_title")
     def select_zettel_command(self, uid_or_title):
-        self.select_note(self.zettels, uid_or_title)
+        self.select_note(self.notebox.zettels, uid_or_title)
 
     @with_args("context_type_name", "uid_or_title")
     def select_context_command(self, context_type_name, uid_or_title):
