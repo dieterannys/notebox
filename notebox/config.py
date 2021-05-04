@@ -37,15 +37,15 @@ class ContextTypeProviderConfig:
 @dataclass
 class ContextTypeConfig:
     name: str
-    context_provider: ContextTypeProviderConfig
     title_format: str
+    context_provider: ContextTypeProviderConfig = None
 
     @classmethod
     def from_dict(cls, d: Dict):
         return cls(
             name=d['name'],
-            context_provider=ContextTypeProviderConfig.from_dict(d['context_provider']),
-            title_format=d.get('title_format', "{title}")
+            title_format=d.get('title_format', "{title}"),
+            context_provider=ContextTypeProviderConfig.from_dict(d.get('context_provider')) if d.get('context_provider') is not None else None,
         )
 
 

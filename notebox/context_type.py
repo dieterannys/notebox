@@ -12,8 +12,13 @@ class ContextType(NoteFolder):
 
     def __init__(self, config: ContextTypeConfig, root_folder: str, context_providers: Dict[str, ContextProvider]):
         self.name = config.name
-        self.provider: ContextProvider = context_providers[config.context_provider.name]
-        self.provider_collection: str = config.context_provider.collection
+
+        if config.context_provider is not None:
+            self.provider: ContextProvider = context_providers[config.context_provider.name]
+            self.provider_collection: str = config.context_provider.collection
+        else:
+            self.provider = None
+            self.provider_collection = None
         self.title_format = config.title_format
 
         super().__init__(os.path.join(root_folder, self.name), is_reference=True)
@@ -23,6 +28,10 @@ class ContextType(NoteFolder):
 
     def pull(self):
         super().pull()
+
+        if self.provider is None:
+            return
+
         for provider_item in self.provider.get_items(self.provider_collection):
             note_title = self.title_format.format(**provider_item.__dict__, **provider_item.attributes)
             uid = self.get_uid_from_attributes(provider_item)
