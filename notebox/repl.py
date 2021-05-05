@@ -99,17 +99,15 @@ class ApplicationREPL:
         self.notebox = Notebox(Config.from_yaml_file(os.path.join(os.getenv('HOME'), ".notebox", domain_name + ".yaml")))
         self.selected_note = None
 
+        note_completion_tree = {
+            context_type_name: context_type
+            for context_type_name, context_type 
+            in list(self.notebox.context_types.items()) + [("zettel", self.notebox.zettels)]
+        }
         self.commands = [
-            Command("zettel", self.select_zettel_command, self.notebox.zettels),
-            Command("context",
-                self.select_context_command,
-                {
-                    context_type_name: context_type
-                    for context_type_name, context_type in self.notebox.context_types.items()
-                }
-            ),
+            Command("select", self.select_command, note_completion_tree),
+            Command("link", self.link_command, note_completion_tree),
             Command("deselect", self.deselect_command),
-            Command("link", self.link_zettel_command, self.notebox.zettels),
             Command("edit", self.edit_note_command),
             Command("start", self.start_command),
             Command("stop", self.stop_command),
@@ -155,23 +153,24 @@ class ApplicationREPL:
 
         return f"[{self.notebox.name.upper()}] [{note_type_indicator}] {self.selected_note.body.title if self.selected_note is not None else '-'}"
 
-    @with_args("uid")
-    def link_zettel_command(self, uid):
-        self.notebox.link(self.selected_note, self.notebox.zettels.notes_by_id[uid])
+    def get_note_folder(self, type_name):
+        if type_name == "zettel":
+            return self.notebox.zettels
+        else:
+            return self.notebox.context_types[type_name]
 
-    def select_note(self, note_folder, uid_or_title):
+    @with_args("type_name", "uid")
+    def link_command(self, type_name, uid):
+        note_folder = self.get_note_folder(type_name)
+        self.notebox.link(self.selected_note, note_folder.notes_by_id[uid])
+
+    @with_args("type_name", "uid_or_title")
+    def select_command(self, type_name, uid_or_title):
+        note_folder = self.get_note_folder(type_name)
         try:
             self.selected_note = note_folder.notes_by_id[uid_or_title]
         except KeyError:
             self.selected_note = note_folder.create(uid_or_title)
-
-    @with_args("uid_or_title")
-    def select_zettel_command(self, uid_or_title):
-        self.select_note(self.notebox.zettels, uid_or_title)
-
-    @with_args("context_type_name", "uid_or_title")
-    def select_context_command(self, context_type_name, uid_or_title):
-        self.select_note(self.notebox.context_types[context_type_name], uid_or_title)
 
     @no_args
     def start_command(self):
