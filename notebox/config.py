@@ -17,7 +17,7 @@ class ContextProviderConfig:
         return cls(
             name=d['name'],
             type=d['type'],
-            params=d['params']
+            params=d.get('params', dict())
         )
 
 

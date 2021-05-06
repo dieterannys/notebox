@@ -24,7 +24,15 @@ class ContextType(NoteFolder):
         super().__init__(os.path.join(root_folder, self.name), is_reference=True)
 
     def get_uid_from_attributes(self, context_provider_item: ContextProviderItem):
-        return f"{context_provider_item.service}-{context_provider_item.account}-{context_provider_item.uid}"
+        return "-".join([
+            str(e) 
+            for e in [
+                context_provider_item.service, 
+                context_provider_item.account, 
+                context_provider_item.uid
+            ] 
+            if e is not None
+        ])
 
     def pull(self):
         super().pull()
