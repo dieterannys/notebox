@@ -93,6 +93,8 @@ def no_args(f):
     return wrapper
 
 
+
+
 class ApplicationREPL:
 
     def __init__(self, domain_name: str):
@@ -105,7 +107,6 @@ class ApplicationREPL:
             in list(self.notebox.context_types.items()) + [("zettel", self.notebox.zettels)]
         }
         self.commands = [
-            Command("select", self.select_command, note_completion_tree),
             Command("link", self.link_command, note_completion_tree),
             Command("deselect", self.deselect_command),
             Command("edit", self.edit_note_command),
@@ -113,10 +114,18 @@ class ApplicationREPL:
             Command("stop", self.stop_command),
             Command("clean", self.clean_command),
             Command("quit", self.quit_command)
+        ] + [
+            Command(context_type_name, self.select_wrapper(context_type_name), context_type)
+            for context_type_name, context_type in note_completion_tree.items()
         ]
 
         self.completer = NoteCompleter(self.commands)
         self.session = PromptSession(completer=self.completer)
+
+    def select_wrapper(self, type_name):
+        def wrapper(uid_or_title):
+            return self.select_command(f"{type_name} {uid_or_title}")
+        return wrapper
 
     def run(self):
         while True:
