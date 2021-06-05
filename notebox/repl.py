@@ -12,7 +12,6 @@ from prompt_toolkit.completion import Completer, Completion
 from notebox.notebox import Notebox
 from notebox.note_folder import NoteFolder
 from notebox.config import Config
-from notebox.context_provider.base import ContextProviderItemType
 from notebox.note import NoteType
 
 
@@ -87,27 +86,35 @@ def with_args(*keys):
     return decorator
 
 
+def with_note(f):
+    def wrapper(self, params):
+        node = self.notebox.folder_tree
+        tail = params
+        while not isinstance(node, NoteFolder):
+            head, tail = tail.split(" ", 1)
+            node = node[head]
+        try:
+            note = node.notes_by_id[tail]
+        except KeyError:
+            note = node.create(tail)
+        return f(self, note=note)
+    return wrapper
+
+
 def no_args(f):
     def wrapper(self, params):
         return f(self)
     return wrapper
 
 
-
-
 class ApplicationREPL:
 
-    def __init__(self, domain_name: str):
-        self.notebox = Notebox(Config.from_yaml_file(os.path.join(os.getenv('HOME'), ".notebox", domain_name + ".yaml")))
+    def __init__(self):
+        self.notebox = Notebox(Config.from_yaml_file(os.path.join(os.getenv('HOME'), ".notebox", "config.yaml")))
         self.selected_note = None
 
-        note_completion_tree = {
-            context_type_name: context_type
-            for context_type_name, context_type 
-            in list(self.notebox.context_types.items()) + [("zettel", self.notebox.zettels)]
-        }
         self.commands = [
-            Command("link", self.link_command, note_completion_tree),
+            Command("link", self.link_command, self.notebox.folder_tree),
             Command("deselect", self.deselect_command),
             Command("edit", self.edit_note_command),
             Command("start", self.start_command),
@@ -115,8 +122,8 @@ class ApplicationREPL:
             Command("clean", self.clean_command),
             Command("quit", self.quit_command)
         ] + [
-            Command(context_type_name, self.select_wrapper(context_type_name), context_type)
-            for context_type_name, context_type in note_completion_tree.items()
+            Command(top_name, self.select_wrapper(top_name), subtree)
+            for top_name, subtree in self.notebox.folder_tree.items()
         ]
 
         self.completer = NoteCompleter(self.commands)
@@ -153,47 +160,37 @@ class ApplicationREPL:
     def toolbar(self):
         if self.selected_note is None:
             note_type_indicator = ' '
-        elif self.selected_note.note_type == NoteType.ZETTEL:
-            note_type_indicator = 'Z'
-        elif self.selected_note.note_type == NoteType.CONTEXT:
-            note_type_indicator = 'C'
+            note_domain = ' '
         else:
-            note_type_indicator = ' '
+            note_type_indicator = self.selected_note.note_type.value[0].upper()
+            note_domain = self.selected_note.domain.upper() if self.selected_note.domain is not None else ' '
 
-        return f"[{self.notebox.name.upper()}] [{note_type_indicator}] {self.selected_note.body.title if self.selected_note is not None else '-'}"
+        return f"[{note_domain}] [{note_type_indicator}] {self.selected_note.body.title if self.selected_note is not None else '-'}"
 
-    def get_note_folder(self, type_name):
-        if type_name == "zettel":
-            return self.notebox.zettels
-        else:
-            return self.notebox.context_types[type_name]
+    @with_note
+    def link_command(self, note):
+        self.notebox.link(self.selected_note, note)
 
-    @with_args("type_name", "uid")
-    def link_command(self, type_name, uid):
-        note_folder = self.get_note_folder(type_name)
-        self.notebox.link(self.selected_note, note_folder.notes_by_id[uid])
-
-    @with_args("type_name", "uid_or_title")
-    def select_command(self, type_name, uid_or_title):
-        note_folder = self.get_note_folder(type_name)
-        try:
-            self.selected_note = note_folder.notes_by_id[uid_or_title]
-        except KeyError:
-            self.selected_note = note_folder.create(uid_or_title)
+    @with_note
+    def select_command(self, note):
+        self.selected_note = note
 
     @no_args
     def start_command(self):
-        if self.selected_note is None or self.selected_note.note_type != NoteType.CONTEXT:
+        if self.selected_note is None or self.selected_note.note_type == NoteType.ZETTEL:
             print('please select a context first')
             return
         self.notebox.edit_note(self.selected_note)
-        cmd = ["timew", "start", self.notebox.name]
-        if self.selected_note.provider_item.item_type == ContextProviderItemType.EVENT:
-            cmd.append("meeting")
-        else: 
-            cmd.extend(self.selected_note.provider_item.attributes.get('tags', []))
+        cmd = [
+            "timew", 
+            "start",
+            self.selected_note.note_type.value,
+            *self.selected_note.provider_item.tags
+        ]
+        if self.selected_note.domain is not None:
+            cmd.append(self.selected_note.domain)
         subprocess.Popen(cmd)
-        subprocess.Popen(["timew", "annotate", self.selected_note.provider_item.title])
+        subprocess.Popen(["timew", "annotate", self.selected_note.body.title])
 
     @no_args
     def stop_command(self):
@@ -218,5 +215,5 @@ class ApplicationREPL:
 
 
 def main():
-    ApplicationREPL(sys.argv[1]).run()
+    ApplicationREPL().run()
 

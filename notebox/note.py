@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
 import re
 import io
 from enum import Enum
@@ -23,8 +24,11 @@ class Link:
 
 
 class NoteType(Enum):
-    ZETTEL = 1
-    CONTEXT = 2
+    ZETTEL = "zettel"
+    SOURCE = "source"
+    EVENT = "event"
+    PROJECT = "project"
+    DAILY = "daily"
 
 
 @dataclass
@@ -125,6 +129,7 @@ class Note:
     note_type: NoteType
     body: NoteBody
     provider_item: ContextProviderItem = None
+    domain: str = None
     flagged: bool = False
 
     @property
@@ -136,13 +141,14 @@ class Note:
         return len(self.body.content) == 0 and len(self.body.links) == 0 and len(self.body.references) == 0
 
     @classmethod
-    def load(cls, filepath, note_type):
+    def load(cls, filepath, note_type, domain):
         with open(filepath) as f:
             raw_content = f.read()
         return cls(
             uid=os.path.split(os.path.splitext(filepath)[0])[-1],
             folder_path=os.path.abspath(os.path.dirname(filepath)),
             note_type=note_type,
+            domain=domain,
             body=NoteBody.from_string(raw_content)
         )
 

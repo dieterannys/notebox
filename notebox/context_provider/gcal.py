@@ -3,12 +3,13 @@
 import os
 import pickle
 from datetime import datetime, timedelta
+from typing import Dict, Any
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-from notebox.context_provider.base import ContextProvider, ContextProviderItem, ContextProviderItemType
+from notebox.context_provider.base import ContextProvider, ContextProviderItem
 
 
 class ContextProviderGcal(ContextProvider):
@@ -49,23 +50,22 @@ class ContextProviderGcal(ContextProvider):
             collection=collection,
             account=self.username,
             service="gcal",
-            item_type=ContextProviderItemType.EVENT,
-            attributes=dict(
-                start_time = start_time,
-                end_time = end_time,
-            ),
+            start_time = start_time,
+            end_time = end_time,
             raw=raw,
         )
 
-    def get_items(self, collection: str):
+    def get_items(self, filters: Dict[str, Any]):
+        if set(filters.keys()) != {"calendar"}:
+            raise ValueError("Gcal filters should contain a single key 'calendar'")
         start = datetime.now().replace(hour=0, minute=0, second=0)
         end = start + timedelta(days=1)
         events_result = self.calendar.events().list(
-            calendarId=collection,
+            calendarId=filters['calendar'],
             timeMin=start.isoformat() + 'Z',
             timeMax=end.isoformat() + 'Z',
             singleEvents=True,
             orderBy='startTime'
         ).execute()
-        return [self._convert_to_item(raw, collection) for raw in events_result.get("items", [])]
+        return [self._convert_to_item(raw, filters['calendar']) for raw in events_result.get("items", [])]
 

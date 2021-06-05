@@ -22,49 +22,51 @@ class ContextProviderConfig:
 
 
 @dataclass
-class ContextTypeProviderConfig:
-    name: str
-    collection: str
+class ContextFolderConfig:
+    provider: str
+    title_format: str
+    filter: Dict[str, Any]
 
     @classmethod
     def from_dict(cls, d: Dict):
         return cls(
-            name=d['name'],
-            collection=d['collection'],
+            provider=d['provider'],
+            title_format=d.get('title_format', "{title}"),
+            filter=d.get('filter', dict())
         )
 
 
 @dataclass
-class ContextTypeConfig:
+class DomainConfig:
     name: str
-    title_format: str
-    context_provider: ContextTypeProviderConfig = None
+    event: ContextFolderConfig
+    project: ContextFolderConfig
 
     @classmethod
     def from_dict(cls, d: Dict):
         return cls(
             name=d['name'],
-            title_format=d.get('title_format', "{title}"),
-            context_provider=ContextTypeProviderConfig.from_dict(d.get('context_provider')) if d.get('context_provider') is not None else None,
+            event=ContextFolderConfig.from_dict(d.get('event')) if d.get('event') is not None else None,
+            project=ContextFolderConfig.from_dict(d.get('project')) if d.get('project') is not None else None,
         )
 
 
 @dataclass
 class Config:
-    name: str
     path: str
     editor: str
     context_providers: List[ContextProviderConfig]
-    context_types: List[ContextTypeConfig]
+    source: ContextFolderConfig
+    domains: List[DomainConfig]
 
     @classmethod
     def from_dict(cls, d: Dict):
         return cls(
-            name=d['name'],
             path=d['path'],
             editor=d['editor'].split(' '),
             context_providers=[ContextProviderConfig.from_dict(ds) for ds in d['context_providers']],
-            context_types=[ContextTypeConfig.from_dict(ds) for ds in d['context_types']]
+            source=ContextFolderConfig.from_dict(d['source']),
+            domains=[DomainConfig.from_dict(ds) for ds in d['domains']],
         )
     
     @classmethod

@@ -14,10 +14,11 @@ class NoteFolder:
     '''Manages a folder of notes, and conversions between files and Note objects
     '''
 
-    def __init__(self, path: str, is_reference=False):
+    def __init__(self, path: str, note_type: NoteType, domain: str = None):
         self.path = os.path.abspath(path)
         self.notes = []
-        self.note_type = NoteType.CONTEXT if is_reference else NoteType.ZETTEL
+        self.note_type = note_type
+        self.domain = domain
 
         self.pull()
 
@@ -54,7 +55,8 @@ class NoteFolder:
             note_type=self.note_type,
             body=NoteBody(
                 title=title,
-            )
+            ),
+            domain=self.domain,
         )
         note.push()
         self.notes.append(note)
@@ -65,7 +67,7 @@ class NoteFolder:
         '''
         self.create_path_if_not_exists()
         self.notes = [
-            Note.load(os.path.join(self.path, fn), self.note_type)
+            Note.load(os.path.join(self.path, fn), self.note_type, self.domain)
             for fn in os.listdir(self.path)
             if fn.endswith(".md")
         ]
